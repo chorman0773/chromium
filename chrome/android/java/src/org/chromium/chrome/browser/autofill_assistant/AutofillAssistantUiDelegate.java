@@ -36,6 +36,7 @@ import android.widget.TextView;
 
 import org.json.JSONObject;
 
+import org.chromium.base.ApiCompatibilityUtils;
 import org.chromium.base.Callback;
 import org.chromium.chrome.autofill_assistant.R;
 import org.chromium.chrome.browser.ChromeActivity;
@@ -49,7 +50,6 @@ import org.chromium.chrome.browser.help.HelpAndFeedback;
 import org.chromium.chrome.browser.profiles.Profile;
 import org.chromium.chrome.browser.snackbar.Snackbar;
 import org.chromium.chrome.browser.snackbar.SnackbarManager;
-import org.chromium.components.variations.VariationsAssociatedData;
 import org.chromium.content_public.browser.WebContents;
 import org.chromium.payments.mojom.PaymentOptions;
 
@@ -291,8 +291,9 @@ class AutofillAssistantUiDelegate {
         mChipsViewContainer = mCarouselScroll.findViewById(R.id.carousel);
         mStatusMessageView = mBottomBar.findViewById(R.id.status_message);
         mProgressBar = new AnimatedProgressBar(mBottomBar.findViewById(R.id.progress_bar),
-                mActivity.getColor(R.color.modern_blue_600),
-                mActivity.getColor(R.color.modern_blue_600_alpha_38_opaque));
+                ApiCompatibilityUtils.getColor(mActivity.getResources(), R.color.modern_blue_600),
+                ApiCompatibilityUtils.getColor(
+                        mActivity.getResources(), R.color.modern_blue_600_alpha_38_opaque));
 
         mDetailsViewContainer = (ViewGroup) mBottomBar.findViewById(R.id.details);
         mDetailsImage = mDetailsViewContainer.findViewById(R.id.details_image);
@@ -309,17 +310,10 @@ class AutofillAssistantUiDelegate {
                 == ViewCompat.LAYOUT_DIRECTION_RTL;
 
         // Finch experiment to adjust overlay color
-        String overlayColor = VariationsAssociatedData.getVariationParamValue(
-                "AutofillAssistantOverlay", "overlay_color");
-        if (!overlayColor.isEmpty()) {
-            try {
-                @ColorInt
-                int color = Color.parseColor(overlayColor);
-                mOverlay.setBackgroundColor(color);
-                mTouchEventFilter.setGrayOutColor(color);
-            } catch (IllegalArgumentException exception) {
-                // ignore
-            }
+        Integer overlayColor = AutofillAssistantStudy.getOverlayColor();
+        if (overlayColor != null) {
+            mOverlay.setBackgroundColor(overlayColor);
+            mTouchEventFilter.setGrayOutColor(overlayColor);
         }
 
         // TODO(crbug.com/806868): Listen for contextual search shown so as to hide this UI.
@@ -562,9 +556,11 @@ class AutofillAssistantUiDelegate {
             return;
         } else {
             @ColorInt
-            int startColor = mActivity.getColor(R.color.modern_grey_100);
+            int startColor = ApiCompatibilityUtils.getColor(
+                    mActivity.getResources(), R.color.modern_grey_100);
             @ColorInt
-            int endColor = mActivity.getColor(R.color.modern_grey_50);
+            int endColor = ApiCompatibilityUtils.getColor(
+                    mActivity.getResources(), R.color.modern_grey_50);
 
             mDetailsPulseAnimation = ValueAnimator.ofInt(startColor, endColor);
             mDetailsPulseAnimation.setDuration(DETAILS_PULSING_DURATION_MS);
